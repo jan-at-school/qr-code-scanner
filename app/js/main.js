@@ -12,7 +12,7 @@ if ('serviceWorker' in navigator) {
         console.log('SW registered: ', reg);
         if (!localStorage.getItem('offline')) {
           localStorage.setItem('offline', true);
-          snackbar.show('App is ready for offline usage.', 5000);
+          // snackbar.show('App is ready for offline usage.', 5000);
         }
       })
       .catch(regError => {
@@ -32,6 +32,7 @@ window.addEventListener('DOMContentLoaded', () => {
   var selectPhotoBtn = document.querySelector('.app__select-photos');
   var dialogElement = document.querySelector('.app__dialog');
   var dialogOverlayElement = document.querySelector('.app__dialog-overlay');
+  var dialogHeadingElement = document.querySelector('#app__dialog-heading');
   var dialogOpenBtnElement = document.querySelector('.app__dialog-open');
   var dialogCloseBtnElement = document.querySelector('.app__dialog-close');
   var scanningEle = document.querySelector('.custom-scanner');
@@ -39,6 +40,12 @@ window.addEventListener('DOMContentLoaded', () => {
   var helpTextEle = document.querySelector('.app__help-text');
   var infoSvg = document.querySelector('.app__header-icon svg');
   var videoElement = document.querySelector('video');
+
+  var queryParams = getUrlParams(window.location.href);
+  console.log(queryParams);
+
+  dialogHeadingElement.innerHTML = queryParams.onSuccessMessage ? queryParams.onSuccessMessage : 'Detected Successfully!';
+
   window.appOverlay = document.querySelector('.app__overlay');
 
   //Initializing qr scanner
@@ -78,6 +85,20 @@ window.addEventListener('DOMContentLoaded', () => {
     hideDialog();
   }
 
+  function getUrlParams(url) {
+    var params = {};
+    (url + '?')
+      .split('?')[1]
+      .split('&')
+      .forEach(function(pair) {
+        pair = (pair + '=').split('=').map(decodeURIComponent);
+        if (pair[0].length) {
+          params[pair[0]] = pair[1];
+        }
+      });
+    return params;
+  }
+
   //Scan
   function scan(forSelectedPhotos = false) {
     if (window.isMediaStreamAPISupported && !window.noCameraPermission) {
@@ -96,13 +117,21 @@ window.addEventListener('DOMContentLoaded', () => {
       if (isURL(result)) {
         dialogOpenBtnElement.style.display = 'inline-block';
       }
-      dialogElement.classList.remove('app__dialog--hide');
-      dialogOverlayElement.classList.remove('app__dialog--hide');
+      onScanned();
+
       const frame = document.querySelector('#frame');
       // if (forSelectedPhotos && frame) frame.remove();
     }, forSelectedPhotos);
   }
 
+  function onScanned() {
+    if (!queryParams.hideURL) {
+      textBoxEle.style.display = 'none';
+    }
+
+    dialogElement.classList.remove('app__dialog--hide');
+    dialogOverlayElement.classList.remove('app__dialog--hide');
+  }
   //Hide dialog
   function hideDialog() {
     copiedText = null;
